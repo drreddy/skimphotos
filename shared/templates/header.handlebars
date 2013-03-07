@@ -1,0 +1,13 @@
+
+    <a href='{{pathTo "index"}}' id="logo" >
+        <h1 id="icon-resize-sample" class="icon-compass" style="font-size: 60px; color: red;"></h1>
+    </a>
+
+  {{#if place}}
+  <a href='{{pathTo "places" place}}' >
+        <h1 style="margin-left:100px;">Photos Near <span id="location">{{place.text}}</span></h1>
+    </a>
+  {{else}}
+    <h1>Photos Near <span id="location">Me</span></h1>
+  {{/if}}
+

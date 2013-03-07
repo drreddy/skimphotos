@@ -1,0 +1,5 @@
+ul.layout{float:left;margin-left:150px;margin-bottom:200px;}
+.block{float:left;width:800px;margin-right:100px;}
+#wrap,.metrouicss{overflow-y:hidden;}
+.tile img{width:130px;height:130px;}
+.tile-content{padding:10px  !important;}

@@ -1,0 +1,21 @@
+{{#if nav}}
+<ul class="lightbox-nav layout">
+  {{#if nav.prev}}
+    <li class="prev"><a href='{{pathTo "photos" nav.prev}}'>« Previous</a></li>
+  {{/if}}
+
+  {{#if nav.next}}
+    <li class="next"><a href='{{pathTo "photos" nav.next}}'>Next »</a></li>
+  {{/if}}
+</ul>
+{{/if}}
+
+<div class="photo">
+    <img src="{{photo.largeURL}}" alt="A photo titled: {{photo.title}}" />
+
+    <div class="photo-info">
+        <h2 class="photo-title">
+            <a href="{{photo.pageURL}}" title="View on Flickr">{{photo.title}}</a>
+        </h2>
+    </div>
+</div>

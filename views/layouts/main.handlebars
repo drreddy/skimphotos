@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+
+    <title>{{> title}}</title>
+    <meta name="description" content="Look at interesting photos of things taken near your current location" />
+    <meta name="author" content="Eric Ferraiuolo" />
+
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="stylesheet" href="/style_new.css" />
+	<link rel="stylesheet" href="/modern.css" />
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+<style>
+#sld{display:none;}
+body{overflow-x:scroll;overflow-y:hidden;}
+</style>
+
+
+  {{#typekit}}
+    <script src="http://use.typekit.com/{{id}}.js"></script>
+    <script>try{ Typekit.load(); } catch (e) {}</script>
+  {{/typekit}}
+</head>
+<body class="metrouicss">
+    <div id="wrap" class="{{#if located}}located{{else}}loading{{/if}} page bg-color-blueLight">
+        <div class="page-header">
+		<div id="header" class="page-header-content" style="position:fixed;">
+            {{> header}}
+		</div>
+        </div>
+
+        <div  class="page-region" style="position:relative;top:16%;">
+		<div id="main" class="layout page-region-content" >
+            {{{body}}}
+		</div>
+        <!---  OUR PERSONAL STUFF HERE                                 -->
+        <div id="disp"><canvas id="comp"></canvas></div>
+        <video id="video" autoplay width="300" style="display:none"></video>
+        <canvas id="canvas" style="width:300px;display:none;"></canvas>
+        <script>motion_flag=1;
+function getCookie(c_name)
+{
+var i,x,y,ARRcookies=document.cookie.split(";");
+for (i=0;i<ARRcookies.length;i++)
+{
+  x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+  y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+  x=x.replace(/^\s+|\s+$/g,"");
+  if (x==c_name)
+    {
+    return unescape(y);
+    }
+  }
+}
+        </script>
+
+
+        <!--------------------------------------------------- -->
+
+<div id="sld" style="position:absolute;top:-16%;z-index:5000;">
+
+
+</div>
+<script>
+var wid=$(window).width();
+var hgt=$(window).height();
+$("#sld").css("height", hgt);
+$("#sld").css("width", wid);
+</script>
+        <!------------------------------------------------------ -->
+        <!--                                             -->
+        </div>
+    </div>
+	
+
+    <script src="http://yui.yahooapis.com/{{yui_version}}/build/yui/yui{{min}}.js"></script>
+    <script>
+        YUI.applyConfig({{{yui_config}}});
+
+        {{{pnm_env}}}
+    </script>
+
+    <script>
+    YUI().use('pnm-app', 'json-parse', 'ios-oc-fix', function (Y) {
+
+        var PNMEnv = YUI.namespace('Env.PNM'),
+            data   = YUI.namespace('Env.PNM.DATA'),
+            routes = PNMEnv.ROUTES,
+            view   = PNMEnv.VIEW,
+            app, place, photos, photo;
+
+        // Re-hydrate models.
+        place  = new Y.PNM.Place(data.place ? Y.JSON.parse(data.place) : {});
+        photos = new Y.PNM.Photos({items: data.photos ? Y.JSON.parse(data.photos) : []});
+        photo  = new Y.PNM.Photo(data.photo ? Y.JSON.parse(data.photo) : {});
+
+        // Register template helpers.
+        Y.Object.each(Y.PNM.Helpers, function (helper, name) {
+            Y.Handlebars.registerHelper(name, helper);
+        });
+
+        // Create app.
+        app = new Y.PNM.App({
+            place : place,
+            photos: photos,
+
+            container    : '#wrap',
+            viewContainer: '#main',
+
+            transitions  : true,
+            serverRouting: true
+        });
+
+        // Setup routes.
+        Y.Array.each(app.namedRoutes, function (route, i) {
+            app.route(routes[route.name].path, route.callbacks);
+            app.get('routes')[i].name = route.name;
+        });
+
+        // Re-hydrate view.
+        if (view) {
+            app.showContent('#main .' + view.name, {
+                view: {
+                    name: view.name,
+
+                    config: {
+                        place : place,
+                        photos: photos,
+                        photo : photo
+                    }
+                },
+
+                transition: false
+            });
+        }
+
+        // Determine if the user needs to be located. When the app is saved to
+        // the home screen in iOS, always route to "/"" so geolocation lookup
+        // is preformed.
+        if ((photo.isNew() && place.isNew()) || Y.config.win.navigator.standalone) {
+            app.locate();
+        } else {
+            app.render();
+
+            if (photos.isEmpty()) {
+                app.loadPhotos();
+            }
+        }
+
+    });
+
+
+
+
+
+    </script>
+
+    
+    <script>
+
+          var photourls=localStorage.urs;
+    video=document.getElementById('video')
+canvas=document.getElementById('canvas')
+_=canvas.getContext('2d')
+ccanvas=document.getElementById('comp')
+c_=ccanvas.getContext('2d')
+var ar;
+navigator.webkitGetUserMedia({audio:true,video:true},function(stream){
+    s=stream
+    video.src=window.webkitURL.createObjectURL(stream)
+    video.addEventListener('play',
+        function(){setInterval(dump,1000/25)}
+    )
+},function(){
+    console.log('OOOOOOOH! DEEEEENIED!')
+})
+compression=5
+width=height=0
+function dump(){
+    if(canvas.width!=video.videoWidth){
+        width=Math.floor(video.videoWidth/compression)
+        height=Math.floor(video.videoHeight/compression)
+        canvas.width=ccanvas.width=width
+        canvas.height=ccanvas.height=height
+    }
+    _.drawImage(video,width,0,-width,height)
+    draw=_.getImageData(0,0,width,height)
+    //c_.putImageData(draw,0,0)
+    test()  
+}
+last=false
+thresh=150
+down=false
+wasdown=false
+function test(){
+    delt=_.createImageData(width,height)
+    if(last!==false){
+        var totalx=0,totaly=0,totald=0,totaln=delt.width*delt.height
+        ,dscl=0
+        ,pix=totaln*4;while(pix-=4){
+            var d=Math.abs(
+                draw.data[pix]-last.data[pix]
+            )+Math.abs(
+                draw.data[pix+1]-last.data[pix+1]
+            )+Math.abs(
+                draw.data[pix+2]-last.data[pix+2]
+            )
+            if(d>thresh){
+                delt.data[pix]=160
+                delt.data[pix+1]=255
+                    delt.data[pix+2]=
+                delt.data[pix+3]=255
+                totald+=1
+                totalx+=((pix/4)%width)
+                totaly+=(Math.floor((pix/4)/delt.height))
+            }
+            else{
+                delt.data[pix]=
+                    delt.data[pix+1]=
+                    delt.data[pix+2]=0
+                delt.data[pix+3]=0
+            }
+        }
+    }
+    //slide.setAttribute('style','display:initial')
+    //slide.value=(totalx/totald)/width
+    if(totald){
+        down={
+            x:totalx/totald,
+            y:totaly/totald,
+            d:totald
+        }
+        handledown()
+    }
+    //console.log(totald)
+    last=draw
+    c_.putImageData(delt,0,0)
+}
+movethresh=2
+brightthresh=300
+overthresh=1000
+function calibrate(){
+    wasdown={
+        x:down.x,
+        y:down.y,
+        d:down.d
+    }
+}
+
+
+
+avg=0
+state=0//States: 0 waiting for gesture, 1 waiting for next move after gesture, 2 waiting for gesture to end
+function handledown(){
+
+    avg=0.9*avg+0.1*down.d
+    var davg=down.d-avg,good=davg>brightthresh
+    //console.log(davg)
+    switch(state){
+        case 0:
+            if(good){//Found a gesture, waiting for next move
+                
+                state=1
+                calibrate()
+            }
+            break
+        case 2://Wait for gesture to end
+            if(!good){//Gesture ended
+                
+                state=0
+                
+                
+            }
+            break;
+        case 1://Got next move, do something based on direction
+
+            var dx=down.x-wasdown.x,dy=down.y-wasdown.y
+            var dirx=Math.abs(dy)<Math.abs(dx)//(dx,dy) is on a bowtie
+            //console.log(good,davg)
+            if(dx<-movethresh&&dirx){
+                //console.log('right')
+                if(motion_flag==1){pageScrollr()}
+                
+                 }
+            else if(dx>movethresh&&dirx){
+                //console.log('left')
+                if(motion_flag==1){pageScrolll()}
+                
+            }
+            
+            if(dy<-movethresh&&!dirx){
+                if(davg<overthresh){
+                     //console.log('down')
+
+                      if(motion_flag==1){
+                     motion_flag=2
+                     document.getElementById("sld").innerHTML="<iframe id='slider_show' style='width:100%;height:100%;' src='http://localhost/finger/home.php?urls="+photourls+"'></iframe>"
+                     
+                     pageScrolltol()
+                     
+                    $("#sld").css("display", "block")
+                    
+                    }
+                
+                }
+                
+                
+                
+            }
+            state=2
+            break
+    }
+}
+
+
+
+function pageScrollr() {
+   
+        $('html, body').animate({
+    scrollLeft: '+=900'
+ }, 700);
+}
+
+
+
+function pageScrolll() {
+        $('html, body').animate({
+    scrollLeft: '-=900'
+ }, 700);
+}
+
+function pageScrolltol(){
+
+ $('html, body').animate({
+    scrollLeft: '=0'
+ }, 700);
+}
+
+</script>
+        
+
+</body>
+</html>
